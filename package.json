@@ -1,0 +1,20 @@
+{
+    "name": "ttbot",
+    "version": "2.0.3",
+    "description": "Sending messages from Twitter to Telegram",
+    "main": "index.js",
+    "scripts": {
+        "start": "env-cmd -f .env node index.js"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "cron": "1.8.2",
+        "debug": "4.1.1",
+        "env-cmd": "10.1.0",
+        "graceful-fs": "4.2.6",
+        "jsonfile": "6.0.1",
+        "telegraf": "4.4.2",
+        "twitter": "1.7.1"
+    }
+}
