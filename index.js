@@ -1,5 +1,6 @@
 const Twitter = require('twitter')
 const { Telegraf } = require('telegraf')
+const functions = require('firebase-functions');
 
 const debug = require('debug')
 const CronJob = require('cron').CronJob
@@ -11,7 +12,10 @@ const logError = debug('TTBot:error')
 const actions = require('./utils/actions')
 const twitter = require('./utils/twitter')
 
-const bot = new Telegraf(process.env.telegram_token)
+const envProd = functions.config().ttbot
+const telegram_token = process.env.telegram_token || envProd.telegram_token
+const admin_id = process.env.admin_id || envProd.admin_id
+const bot = new Telegraf(telegram_token)
 
 var config = jsonfile.readFileSync('config.json')
 
@@ -48,7 +52,7 @@ bot.use((ctx, next) => {
         }
     }
     if (!users[id]) {
-        if (id.toString() == process.env.admin_id.toString()) {
+        if (id.toString() == admin_id.toString()) {
             return next(ctx)
         }
         return ctx.replyWithMarkdown(`
@@ -64,7 +68,7 @@ bot.use((ctx, next) => {
     return next(ctx)
 })
 
-bot.telegram.sendMessage(process.env.admin_id, '*TTBot starting...*', {
+bot.telegram.sendMessage(admin_id, '*TTBot starting...*', {
     parse_mode: 'Markdown'
 })
 log('Starting...')
@@ -103,7 +107,7 @@ bot.command('blacklist', (ctx) => {
 })
 
 bot.command('add', (ctx) => {
-    if (ctx.message.from.id.toString() == process.env.admin_id.toString()) {
+    if (ctx.message.from.id.toString() == admin_id.toString()) {
         return ctx.replyWithMarkdown(`
 *Reply this message!*
 Add new user
@@ -121,7 +125,7 @@ Following the format: \`\`\`
 })
 
 bot.hears(/^\/rem\s(.*)/i, (ctx) => {
-    if (ctx.message.from.id.toString() == process.env.admin_id.toString()) {
+    if (ctx.message.from.id.toString() == admin_id.toString()) {
         config = config.reduce((total, user) => {
             if (user.id != ctx.match[1]) {
                 total.push(user)
@@ -153,7 +157,7 @@ bot.hears(/^\/search\s(.*)/i, (ctx) => twitter.getSearch(ctx))
 bot.on('message', (ctx) => {
     if (ctx.message.reply_to_message && ctx.message.reply_to_message.text) {
         var replyMsg = ctx.message.reply_to_message.text
-        if (replyMsg.match('Reply this message!') && ctx.message.from.id.toString() == process.env.admin_id.toString()) {
+        if (replyMsg.match('Reply this message!') && ctx.message.from.id.toString() == admin_id.toString()) {
             var params = (ctx.message.text || '').split('\n')
             if (params.length != 5) {
                 return ctx.replyWithMarkdown('*Invalid user...*, use /add again.')
@@ -203,7 +207,8 @@ bot.catch((err) => logError(`Oooops ${err}`))
 
 bot.startPolling()
 
-new CronJob(process.env.cron_job, function() {
+const job = process.env.cron_job || "50 * * * * *"
+new CronJob(job, function() {
     for (var id in users) {
         twitter.getTimeLine(users[id], notSend)
     }

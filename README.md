@@ -13,7 +13,6 @@ Integration with Twitter <-> Telegram
 telegram_token = 'ABCD:0123456789'
 admin_id = '0123456789'
 cron_job = '50 * * * * *'
-DEBUG = 'TTbot:bot, TTbot:error'
 ```
 
 4. Install dependencies
